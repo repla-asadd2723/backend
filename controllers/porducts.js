@@ -8,5 +8,5 @@ const getAllProductsTesting = async (req, res) => {
 
 module.exports = { 
   getAllProducts,
-   getAllProductsTesting
+  getAllProductsTesting
 }
