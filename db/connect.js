@@ -5,6 +5,7 @@ const mongoose = require('mongoose');
 const uri = "mongodb+srv://pkprogrammer1:MNMdMqm5VJNXPNWf@cluster-backend.vaizo.mongodb.net/cluster-backend?retryWrites=true&w=majority&appName=cluster-backend"
 
 const connectDB = () => {
+    console.log("connecting to db");
     return mongoose.connect(uri);
 }
 
