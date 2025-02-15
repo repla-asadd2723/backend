@@ -1,4 +1,4 @@
-const db = "mongodb://localhost:27017/mean";
+// const db = "mongodb://localhost:27017/mean";
 
 const mongoose = require('mongoose');
 
