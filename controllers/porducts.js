@@ -1,9 +1,13 @@
-const getAllProducts = async (req, res) => {
-  res.status(200).json({ success: true, msg: 'Show all products' });
-}
+const products = require('../models/products');
+
+const getAllProducts = (req, res) => {
+  products.find({})
+    .then(data => res.status(200).json({ success: true, data }))
+    .catch(err => res.status(500).json({ success: false, msg: 'Internal server error' }));
+};
 
 const getAllProductsTesting = async (req, res) => {
-  res.status(200).json({ success: true, msg: 'Show all products' });
+  res.status(200).json({ success: true, msg: 'Show all' });
 }
 
 module.exports = { 
