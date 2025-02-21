@@ -13,8 +13,6 @@ app.use(cors({ origin: "https://king-prawn-app-y5pls.ondigitalocean.app" }));
 app.get('/', (req, res) => {
   res.send('Hello World');
 });
-
-
 app.use('/api/products', require('./routes/products'));
 app.use('/api/auth', require('./routes/Auth'));
 // Database Connection
