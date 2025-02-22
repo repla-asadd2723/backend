@@ -1,24 +1,29 @@
-const express = require("express");
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
-const User = require("../models/User");
+import express, { Request, Response, NextFunction } from "express";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import User from "../../models/User";
 
 const router = express.Router();
 
-router.post("/register", async (req, res) => {
+interface AuthRequest extends Request {
+  user?: { id: string };
+}
+
+// Register Route
+router.post("/register", async (req: Request, res: Response) => {
   try {
     const { name, email, password } = req.body;
 
     // Check if user already exists
-    let user = await User.find({ email });
-    if (user.length > 0) {
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
       return res.status(400).json({ success: false, msg: "User already exists" });
     }
 
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    user = new User({
+    const user = new User({
       name,
       email,
       password: hashedPassword,
@@ -27,16 +32,17 @@ router.post("/register", async (req, res) => {
     await user.save();
     res.status(201).json({ success: true, msg: "User created" });
   } catch (error) {
+    console.error("Error in /register:", error);
     res.status(500).json({ success: false, msg: "Internal server error" });
   }
 });
 
-router.post("/login", async (req, res) => {
+// Login Route
+router.post("/login", async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
 
-    let user = await User.findOne({ email });
-
+    const user = await User.findOne({ email });
     if (!user) {
       return res.status(400).json({ success: false, msg: "Invalid credentials" });
     }
@@ -46,36 +52,44 @@ router.post("/login", async (req, res) => {
       return res.status(400).json({ success: false, msg: "Invalid credentials" });
     }
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "1h" });
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET as string, { expiresIn: "1h" });
 
     res.status(200).json({ success: true, token });
   } catch (error) {
+    console.error("Error in /login:", error);
     res.status(500).json({ success: false, msg: "Internal server error" });
   }
 });
 
-const verifyToken = (req, res, next) => {
+// Middleware to Verify Token
+const verifyToken = (req: AuthRequest, res: Response, next: NextFunction) => {
   const token = req.header("Authorization");
   if (!token) {
     return res.status(401).json({ success: false, msg: "Access denied" });
   }
 
   try {
-    const decoded = jwt.verify(token.replace("Bearer ", ""), process.env.JWT_SECRET);
+    const decoded = jwt.verify(token.replace("Bearer ", ""), process.env.JWT_SECRET as string) as { id: string };
     req.user = decoded;
     next();
   } catch (error) {
-    res.status(400).json({ success: false, msg: "Invalid token" });
+    return res.status(400).json({ success: false, msg: "Invalid token" });
   }
-}
+};
 
-router.get("/profile", verifyToken, async (req, res) => {
+// Get Profile Route
+router.get("/profile", verifyToken, async (req: AuthRequest, res: Response) => {
   try {
+    if (!req.user) {
+      return res.status(401).json({ success: false, msg: "Unauthorized" });
+    }
+
     const user = await User.findById(req.user.id).select("-password");
     res.status(200).json({ success: true, user });
   } catch (error) {
+    console.error("Error in /profile:", error);
     res.status(500).json({ success: false, msg: "Internal server error" });
   }
 });
 
-module.exports = router;
+export default router;
